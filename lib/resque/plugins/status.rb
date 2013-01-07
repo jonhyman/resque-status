@@ -76,11 +76,7 @@ module Resque
         #       job_id = ExampleJob.create(:num => 100)
         #
         def create(options = {})
-          if Resque.inline?
-            self.perform(nil, options)
-          else
-            self.enqueue(self, options)
-          end
+          self.enqueue(self, options)
         end
 
         # Adds a job of type <tt>klass<tt> to the queue with <tt>options<tt>.
@@ -124,11 +120,7 @@ module Resque
         def perform(uuid=nil, options = {})
           uuid ||= Resque::Plugins::Status::Hash.generate_uuid
           instance = new(uuid, options)
-          if Resque.inline?
-            instance.perform
-          else
-            instance.safe_perform!
-          end
+          instance.safe_perform!
           instance
         end
 
@@ -153,7 +145,7 @@ module Resque
       def safe_perform!
         set_status({'status' => 'working'})
         perform
-        if status && status.failed?
+        if status.failed?
           on_failure(status.message) if respond_to?(:on_failure)
           return
         elsif status && !status.completed?
